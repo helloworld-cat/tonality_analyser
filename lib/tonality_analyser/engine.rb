@@ -64,11 +64,11 @@ module TonalityAnalyser
       neg_proba = analysis(text, :neg)
       pos_proba >= neg_proba ? :pos : :neg
     end
-    def load_traning_corpus!
-      TONALITIES.each { |tonality| load_traning_corpus_for(tonality) }
+    def load_traning_corpus!(dir)
+      TONALITIES.each { |tonality| load_traning_corpus_for(dir, tonality) }
     end
-    def load_traning_corpus_for(tonality)
-      File.open("./training/#{tonality}.txt", 'r') do |f|
+    def load_traning_corpus_for(dir, tonality)
+      File.open("#{dir}/#{tonality}.txt", 'r') do |f|
         f.each_line { |line| train(line, tonality) }
         f.close
       end
