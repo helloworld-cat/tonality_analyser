@@ -7,7 +7,6 @@ module TonalityAnalyser
     attr_reader :counted_words, :probabilites
     def initialize
       @total_words = {}
-      @total_words[:all] = 0
       @total_words[:pos] = 0
       @total_words[:neg] = 0
       @counted_words = {}
@@ -21,7 +20,6 @@ module TonalityAnalyser
       raise "Invalid tonality '#{tonality}'" unless TONALITIES.include?(tonality)
       words.split.each do |w|
         word = Helpers::Text.normalize(w)
-        @total_words[:all] += 1
         @counted_words[tonality][word] = @counted_words[tonality].include?(word) ? @counted_words[tonality][word]+1 : 1
       end
     end
