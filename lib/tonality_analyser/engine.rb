@@ -1,14 +1,9 @@
 module TonalityAnalyser
 
-  # Refactor: work to Redis !
-  #   Redis ! Redis ! Redis ! Redis ! Redis ! :)
   class Engine
     TONALITIES = [:pos, :neg]
     attr_reader :counted_words, :probabilites
     def initialize
-      @total_words = {}
-      @total_words[:pos] = 0
-      @total_words[:neg] = 0
       @counted_words = {}
       @counted_words[:pos] = {}
       @counted_words[:neg] = {}
@@ -24,12 +19,11 @@ module TonalityAnalyser
       end
     end
     def compute_probabilities!
-      # TODO: Refactor this :)
-      @counted_words[:pos].each do |word, count|
-        @probabilites[:pos][word] = @counted_words[:pos][word].to_f / (@counted_words[:pos][word].to_f + @counted_words[:neg][word].to_f)
-      end
-      @counted_words[:neg].each do |word, count|
-        @probabilites[:neg][word] = @counted_words[:neg][word].to_f / (@counted_words[:pos][word].to_f + @counted_words[:neg][word].to_f)
+      TONALITIES.each {|t| compute_probabilities_for(t) }
+    end
+    def compute_probabilities_for(tonality)
+      @counted_words[tonality].each do |word, count|
+        @probabilites[tonality][word] = @counted_words[tonality][word].to_f / TONALITIES.each.inject(0) { |sum, t| sum += @counted_words[t][word].to_f }
       end
     end
     def analysis(text, tonality)
