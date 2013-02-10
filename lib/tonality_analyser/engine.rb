@@ -8,7 +8,7 @@ module TonalityAnalyser
     REDIS_PREFIX = 'tonality_analyser'
     def initialize
       @redis = Redis.new
-      @redis.flushall
+      @redis.keys(redis_key('*')).each { |key| @redis.del(key) }
     end
     def redis_key(name)
       "#{REDIS_PREFIX}:#{name}"
@@ -33,7 +33,7 @@ module TonalityAnalyser
         a = @redis.get(redis_key("words:pos:#{word}")).to_f
         b = @redis.get(redis_key("words:neg:#{word}")).to_f
         p = a / (a + b)
-        @redis.set redis_key('probabilites:pos:#{word}'), p
+        @redis.set redis_key("probabilites:pos:#{word}"), p
       end
 
       # @counted_words[:neg].each do |word, count|
@@ -45,7 +45,7 @@ module TonalityAnalyser
         a = @redis.get(redis_key("words:neg:#{word}")).to_f
         b = @redis.get(redis_key("words:pos:#{word}")).to_f
         p = a / (a + b)
-        @redis.set redis_key('probabilites:neg:#{word}'), p
+        @redis.set redis_key("probabilites:neg:#{word}"), p
       end
     end
     def analysis(text, tonality)
@@ -56,7 +56,6 @@ module TonalityAnalyser
         # p = @probabilites[tonality][word] || 0.01
         p = @redis.get(redis_key("probabilites:#{tonality}:#{word}")) || 0.01
         num *= p.to_f
-        puts "num: #{num}"
       end
       num *= 0.5
       words.each do |word|
