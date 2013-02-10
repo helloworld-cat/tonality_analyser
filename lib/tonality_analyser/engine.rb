@@ -39,16 +39,17 @@ module TonalityAnalyser
 
       words = Helpers::Text.clean_words_from(text)
       words.each do |word|
-        @probabilites[tonality][word] ||= 0.01
-        num *= @probabilites[tonality][word]
+        p = @probabilites[tonality][word] || 0.01
+        num *= p
       end
       num *= 0.5
       words.each do |word|
-        @probabilites[tonality][word] ||= 0.01
-        den1 *= @probabilites[tonality][word]
+        p = @probabilites[tonality][word] || 0.01
+        den1 *= p
       end
       words.each do |word|
-        den2 *= (1 - @probabilites[tonality][word])
+        p = @probabilites[tonality][word] || 0.01
+        den2 *= (1 - p)
       end
       proba_pol = num / (den1 + den2)
       proba_pol = 0.0 if proba_pol.nan?
