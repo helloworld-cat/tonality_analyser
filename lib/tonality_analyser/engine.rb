@@ -16,9 +16,6 @@ module TonalityAnalyser
       @probabilites = {}
       @probabilites[:pos] = {}
       @probabilites[:neg] = {}
-      @spec_probabilites = {}
-      @spec_probabilites[:pos] = {}
-      @spec_probabilites[:neg] = {}
     end
     def train(words, tonality)
       raise "Invalid tonality '#{tonality}'" unless TONALITIES.include?(tonality)
@@ -32,11 +29,9 @@ module TonalityAnalyser
       # TODO: Refactor this :)
       @counted_words[:pos].each do |word, count|
         @probabilites[:pos][word] = @counted_words[:pos][word].to_f / (@counted_words[:pos][word].to_f + @counted_words[:neg][word].to_f)
-        @spec_probabilites[:pos][word] = @probabilites[:pos][word]
       end
       @counted_words[:neg].each do |word, count|
         @probabilites[:neg][word] = @counted_words[:neg][word].to_f / (@counted_words[:pos][word].to_f + @counted_words[:neg][word].to_f)
-        @spec_probabilites[:neg][word] = @probabilites[:neg][word]
       end
     end
     def analysis(text, tonality)
@@ -44,8 +39,8 @@ module TonalityAnalyser
 
       words = Helpers::Text.clean_words_from(text)
       words.each do |word|
-        @spec_probabilites[tonality][word] ||= 0.01
-        num *= @spec_probabilites[tonality][word]
+        @probabilites[tonality][word] ||= 0.01
+        num *= @probabilites[tonality][word]
       end
       num *= 0.5
       words.each do |word|
