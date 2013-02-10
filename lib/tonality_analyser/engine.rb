@@ -56,6 +56,7 @@ module TonalityAnalyser
         # p = @probabilites[tonality][word] || 0.01
         p = @redis.get(redis_key("probabilites:#{tonality}:#{word}")) || 0.01
         num *= p.to_f
+        puts "num: #{num}"
       end
       num *= 0.5
       words.each do |word|
