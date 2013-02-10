@@ -17,34 +17,20 @@ module TonalityAnalyser
       raise "Invalid tonality '#{tonality}'" unless TONALITIES.include?(tonality)
       words.split.each do |w|
         word = Helpers::Text.normalize(w)
-        # @counted_words[tonality][word] = @counted_words[tonality].include?(word) ? @counted_words[tonality][word]+1 : 1
         @redis.incr redis_key("words:#{tonality}:#{word}")
       end
     end
     def compute_probabilities!
-      # @counted_words[:pos].each do |word, count|
-      #   @probabilites[:pos][word] = @counted_words[:pos][word].to_f / (@counted_words[:pos][word].to_f + @counted_words[:neg][word].to_f)
-      # end
-
+      TONALITIES.each {|t| compute_probabilities_for(t) }
+    end
+    def compute_probabilities_for(tonality)
       # TODO: use "multi redis"
-      @redis.keys(redis_key("words:pos:*")).each do |key|
+      @redis.keys(redis_key("words:#{tonality}:*")).each do |key|
         count = @redis.get(key)
-        word = key[redis_key('words:pos:').length..key.length]
-        a = @redis.get(redis_key("words:pos:#{word}")).to_f
-        b = @redis.get(redis_key("words:neg:#{word}")).to_f
-        p = a / (a + b)
-        @redis.set redis_key("probabilites:pos:#{word}"), p
-      end
-
-      # @counted_words[:neg].each do |word, count|
-      #   @probabilites[:neg][word] = @counted_words[:neg][word].to_f / (@counted_words[:pos][word].to_f + @counted_words[:neg][word].to_f)
-      # end
-      @redis.keys(redis_key("words:neg:*")).each do |key|
-        count = @redis.get(key)
-        word = key[redis_key('words:neg:').length..key.length]
-        a = @redis.get(redis_key("words:neg:#{word}")).to_f
-        b = @redis.get(redis_key("words:pos:#{word}")).to_f
-        p = a / (a + b)
+        word = key[redis_key("words:#{tonality}:").length..key.length]
+        a = @redis.get(redis_key("words:#{tonality}:#{word}")).to_f
+        sum = TONALITIES.each.inject(0) { |sum, t| sum += @redis.get(redis_key("words:pos:#{word}")).to_f }
+        p = a / sum
         @redis.set redis_key("probabilites:neg:#{word}"), p
       end
     end
@@ -53,23 +39,13 @@ module TonalityAnalyser
 
       words = Helpers::Text.clean_words_from(text)
       words.each do |word|
-        # p = @probabilites[tonality][word] || 0.01
         p = @redis.get(redis_key("probabilites:#{tonality}:#{word}")) || 0.01
         num *= p.to_f
-      end
-      num *= 0.5
-      words.each do |word|
-        # p = @probabilites[tonality][word] || 0.01
-        p = @redis.get(redis_key("probabilites:#{tonality}:#{word}")) || 0.01
         den1 *= p.to_f
-      end
-      words.each do |word|
-        # p = @probabilites[tonality][word] || 0.01
-        p = @redis.get(redis_key("probabilites:#{tonality}:#{word}")) || 0.01
         den2 *= (1 - p.to_f)
       end
 
-      proba_pol = num / (den1 + den2)
+      proba_pol = num*0.5 / (den1 + den2)
       proba_pol = 0.0 if proba_pol.nan?
       proba_pol
     end
