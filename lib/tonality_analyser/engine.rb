@@ -8,6 +8,8 @@ module TonalityAnalyser
     REDIS_PREFIX = 'tonality_analyser'
     def initialize
       @redis = Redis.new
+    end
+    def flush
       @redis.keys(redis_key('*')).each { |key| @redis.del(key) }
     end
     def redis_key(name)
